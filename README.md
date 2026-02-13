@@ -15,6 +15,15 @@ This repository currently includes infrastructure and application bootstrapping:
 
 Business logic (RAG ingestion/retrieval/generation flows) is intentionally not implemented yet.
 
+## Documentation
+
+- Documentation index: `docs/README.md`
+- Getting started: `docs/getting-started.md`
+- Configuration: `docs/configuration.md`
+- Development workflow: `docs/development.md`
+- Architecture: `docs/architecture.md`
+- Operations: `docs/operations.md`
+
 ## Tech Stack
 
 - Python 3.14
