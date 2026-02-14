@@ -4,7 +4,7 @@ PYTHON ?= python3.14
 VENV ?= .venv
 BIN := $(VENV)/bin
 
-.PHONY: help setup venv install install-dev bootstrap dev run-api run-worker run-api-dev run-worker-dev local-services-up local-services-down infra-up infra-down infra-restart infra-logs infra-ps infra-local-up infra-local-down db-upgrade db-downgrade db-current lint format test typecheck lint-local format-local test-local typecheck-local lint-docker format-docker test-docker build up down restart logs ps api worker api-shell worker-shell
+.PHONY: help setup venv install install-dev bootstrap dev run-api run-worker run-api-dev run-worker-dev local-services-up local-services-down infra-up infra-down infra-restart infra-logs infra-ps infra-local-up infra-local-down db-upgrade db-downgrade db-current db-migrate lint format test typecheck lint-local format-local test-local typecheck-local lint-docker format-docker test-docker build up down restart logs ps api worker api-shell worker-shell
 
 help:
 	@printf "Local setup:\n"
@@ -37,7 +37,8 @@ help:
 	@printf "Database (future-ready):\n"
 	@printf "  db-upgrade         Alembic upgrade head\n"
 	@printf "  db-downgrade       Alembic downgrade -1\n"
-	@printf "  db-current         Alembic current revision\n\n"
+	@printf "  db-current         Alembic current revision\n"
+	@printf "  db-migrate         Run scripts/db_migrate.py (ACTION, REVISION)\n\n"
 	@printf "Docker workflow:\n"
 	@printf "  build              Build api/worker images\n"
 	@printf "  up                 Start all docker services\n"
@@ -128,13 +129,21 @@ infra-local-up: local-services-up
 infra-local-down: local-services-down
 
 db-upgrade:
-	$(BIN)/alembic upgrade head
+	DATABASE_URL=$${DATABASE_URL:-postgresql+psycopg://retrievia:retrievia@localhost:5432/retrievia} $(BIN)/alembic upgrade head
 
 db-downgrade:
-	$(BIN)/alembic downgrade -1
+	DATABASE_URL=$${DATABASE_URL:-postgresql+psycopg://retrievia:retrievia@localhost:5432/retrievia} $(BIN)/alembic downgrade -1
 
 db-current:
-	$(BIN)/alembic current
+	DATABASE_URL=$${DATABASE_URL:-postgresql+psycopg://retrievia:retrievia@localhost:5432/retrievia} $(BIN)/alembic current
+
+db-migrate:
+	@test -n "$(ACTION)" || (printf "Usage: make db-migrate ACTION=<upgrade|downgrade|current> [REVISION=<rev>]\n" && exit 1)
+	@if [ -n "$(REVISION)" ]; then \
+		DATABASE_URL=$${DATABASE_URL:-postgresql+psycopg://retrievia:retrievia@localhost:5432/retrievia} $(BIN)/python scripts/db_migrate.py $(ACTION) $(REVISION); \
+	else \
+		DATABASE_URL=$${DATABASE_URL:-postgresql+psycopg://retrievia:retrievia@localhost:5432/retrievia} $(BIN)/python scripts/db_migrate.py $(ACTION); \
+	fi
 
 lint: lint-local
 
