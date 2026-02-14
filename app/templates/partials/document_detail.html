@@ -1,0 +1,18 @@
+<dl class="grid gap-3 text-sm">
+  <div>
+    <dt class="text-slate-500 dark:text-slate-400">Document ID</dt>
+    <dd class="mt-1 font-medium">{{ document.document_id }}</dd>
+  </div>
+  <div>
+    <dt class="text-slate-500 dark:text-slate-400">Title</dt>
+    <dd class="mt-1 font-medium">{{ document.title }}</dd>
+  </div>
+  <div>
+    <dt class="text-slate-500 dark:text-slate-400">External ID</dt>
+    <dd class="mt-1 font-medium">{{ document.external_id or '-' }}</dd>
+  </div>
+  <div>
+    <dt class="text-slate-500 dark:text-slate-400">Created</dt>
+    <dd class="mt-1 font-medium">{{ document.created_at }}</dd>
+  </div>
+</dl>

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Login | Retrievia{% endblock %}
+{% block body %}
+<main class="mx-auto flex min-h-screen w-full max-w-md items-center px-6 py-12">
+  <section class="w-full rounded-2xl border border-slate-200 bg-white/90 p-8 shadow-soft backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
+    <h1 class="text-2xl font-semibold tracking-tight">Welcome back</h1>
+    <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">Sign in with email and password. Tenant is auto-selected.</p>
+    {% include "partials/auth_login_form.html" %}
+    <p class="mt-6 text-sm text-slate-600 dark:text-slate-400">Need an account? <a class="font-medium text-brand-600 hover:text-brand-500" href="/register">Register</a></p>
+  </section>
+</main>
+{% endblock %}

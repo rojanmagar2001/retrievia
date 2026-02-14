@@ -1,0 +1,19 @@
+{% set status = (ingestion_job.status or 'unknown')|lower %}
+{% set status_class = 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200' %}
+{% if status in ['queued', 'running'] %}
+  {% set status_class = 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-200' %}
+{% elif status in ['completed', 'success'] %}
+  {% set status_class = 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200' %}
+{% elif status in ['failed', 'error'] %}
+  {% set status_class = 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-200' %}
+{% endif %}
+
+<div class="flex items-center justify-between text-sm">
+  <div>
+    <span class="rounded-full px-2 py-1 text-xs font-semibold {{ status_class }}">{{ status }}</span>
+    {% if ingestion_job.error_message %}
+      <p class="mt-2 text-xs text-rose-600 dark:text-rose-300">{{ ingestion_job.error_message }}</p>
+    {% endif %}
+  </div>
+  <span class="text-xs text-slate-500 dark:text-slate-400">{{ ingestion_job.processed_chunks or 0 }}/{{ ingestion_job.total_chunks or 0 }}</span>
+</div>

@@ -8,10 +8,10 @@ from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.auth.dependencies import get_current_tenant, get_current_user, get_tenant_scoped_db
@@ -57,11 +57,44 @@ class SourceItem(BaseModel):
 
 
 class ChatResponse(BaseModel):
+    conversation_id: UUID
     answer: str
     citations: list[CitationItem]
     sources: list[SourceItem]
     timings: dict[str, float]
     retrieval_debug: dict[str, Any]
+
+
+class ConversationListItem(BaseModel):
+    conversation_id: UUID
+    title: str
+    last_message_at: datetime | None
+
+
+class ConversationListResponse(BaseModel):
+    items: list[ConversationListItem]
+
+
+class ConversationMessageItem(BaseModel):
+    role: str
+    content: str
+    citations: list[dict[str, Any]]
+    created_at: datetime
+
+
+class ConversationMessagesResponse(BaseModel):
+    conversation_id: UUID
+    title: str
+    items: list[ConversationMessageItem]
+
+
+class ConversationRenameRequest(BaseModel):
+    title: str = Field(min_length=1, max_length=255)
+
+
+class ConversationMutateResponse(BaseModel):
+    conversation_id: UUID
+    title: str
 
 
 class ChatStreamRequest(BaseModel):
@@ -96,6 +129,8 @@ def post_chat(
         prompt_injection_detected=False,
     )
     db.add(user_message)
+    if not conversation.title:
+        conversation.title = payload.message.strip()[:80]
     conversation.last_message_at = datetime.now(timezone.utc)
     db.flush()
 
@@ -172,6 +207,7 @@ def post_chat(
     }
 
     return ChatResponse(
+        conversation_id=conversation.id,
         answer=parsed_answer,
         citations=citations,
         sources=sources,
@@ -206,6 +242,8 @@ def post_chat_stream(
         prompt_injection_detected=False,
     )
     db.add(user_message)
+    if not conversation.title:
+        conversation.title = payload.message.strip()[:80]
     conversation.last_message_at = datetime.now(timezone.utc)
     db.flush()
 
@@ -307,6 +345,7 @@ def post_chat_stream(
             yield _sse_event(
                 "final",
                 {
+                    "conversation_id": str(conversation.id),
                     "answer": parsed_answer,
                     "citations": [citation.model_dump() for citation in citations],
                     "sources": [source.model_dump() for source in sources],
@@ -325,6 +364,125 @@ def post_chat_stream(
         "X-Accel-Buffering": "no",
     }
     return StreamingResponse(event_stream(), media_type="text/event-stream", headers=headers)
+
+
+@router.get("/chat/conversations", response_model=ConversationListResponse)
+def list_conversations(
+    limit: int = 100,
+    db: Session = Depends(get_tenant_scoped_db),
+    current_user: User = Depends(get_current_user),
+    current_tenant: Tenant = Depends(get_current_tenant),
+) -> ConversationListResponse:
+    clamped_limit = min(max(limit, 1), 200)
+    conversations = list(
+        db.scalars(
+            select(Conversation)
+            .where(
+                Conversation.tenant_id == current_tenant.id,
+                Conversation.is_archived.is_(False),
+                or_(Conversation.user_id.is_(None), Conversation.user_id == current_user.id),
+            )
+            .order_by(Conversation.last_message_at.desc().nullslast(), Conversation.created_at.desc())
+            .limit(clamped_limit)
+        ).all()
+    )
+
+    items = [
+        ConversationListItem(
+            conversation_id=conversation.id,
+            title=(conversation.title or "New chat"),
+            last_message_at=conversation.last_message_at,
+        )
+        for conversation in conversations
+    ]
+    return ConversationListResponse(items=items)
+
+
+@router.get("/chat/conversations/{conversation_id}", response_model=ConversationMessagesResponse)
+def get_conversation_messages(
+    conversation_id: UUID,
+    db: Session = Depends(get_tenant_scoped_db),
+    current_user: User = Depends(get_current_user),
+    current_tenant: Tenant = Depends(get_current_tenant),
+) -> ConversationMessagesResponse:
+    conversation = _resolve_conversation(
+        db=db,
+        tenant_id=current_tenant.id,
+        user_id=current_user.id,
+        conversation_id=conversation_id,
+    )
+
+    messages = list(
+        db.scalars(
+            select(Message)
+            .where(
+                Message.conversation_id == conversation.id,
+                Message.role.in_([MessageRole.USER, MessageRole.ASSISTANT]),
+            )
+            .order_by(Message.created_at.asc())
+        ).all()
+    )
+
+    items = [
+        ConversationMessageItem(
+            role=message.role.value,
+            content=message.content,
+            citations=(message.citations_json if isinstance(message.citations_json, list) else []),
+            created_at=message.created_at,
+        )
+        for message in messages
+    ]
+
+    return ConversationMessagesResponse(
+        conversation_id=conversation.id,
+        title=conversation.title or "New chat",
+        items=items,
+    )
+
+
+@router.patch("/chat/conversations/{conversation_id}", response_model=ConversationMutateResponse)
+def rename_conversation(
+    conversation_id: UUID,
+    payload: ConversationRenameRequest,
+    db: Session = Depends(get_tenant_scoped_db),
+    current_user: User = Depends(get_current_user),
+    current_tenant: Tenant = Depends(get_current_tenant),
+) -> ConversationMutateResponse:
+    conversation = _resolve_conversation(
+        db=db,
+        tenant_id=current_tenant.id,
+        user_id=current_user.id,
+        conversation_id=conversation_id,
+    )
+    next_title = payload.title.strip()
+    if not next_title:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="title_required")
+
+    conversation.title = next_title[:255]
+    db.commit()
+    return ConversationMutateResponse(conversation_id=conversation.id, title=conversation.title)
+
+
+@router.delete(
+    "/chat/conversations/{conversation_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    response_class=Response,
+)
+def delete_conversation(
+    conversation_id: UUID,
+    db: Session = Depends(get_tenant_scoped_db),
+    current_user: User = Depends(get_current_user),
+    current_tenant: Tenant = Depends(get_current_tenant),
+) -> Response:
+    conversation = _resolve_conversation(
+        db=db,
+        tenant_id=current_tenant.id,
+        user_id=current_user.id,
+        conversation_id=conversation_id,
+    )
+    conversation.is_archived = True
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 def _resolve_conversation(

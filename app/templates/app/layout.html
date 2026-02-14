@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}{{ page_title }} | Retrievia{% endblock %}
+{% block body %}
+<div class="app-shell flex min-h-screen flex-col">
+  <header class="sticky top-0 z-20 border-b border-slate-200/70 bg-white/70 px-4 py-3 backdrop-blur-xl dark:border-slate-800/70 dark:bg-slate-900/70 lg:px-8">
+    <div class="app-topbar flex items-center justify-between gap-3">
+      <div class="flex items-center gap-4">
+        <a href="/app/chat" class="inline-flex items-center gap-2 text-base font-semibold">
+          <span class="inline-block h-2.5 w-2.5 rounded-full bg-brand-500"></span>
+          Retrievia
+        </a>
+        <div class="hidden items-center gap-2 text-sm md:flex">
+          <span class="rounded-md border border-slate-300 px-2 py-1 font-medium dark:border-slate-700">Tenant</span>
+          <code class="rounded-md bg-slate-100 px-2 py-1 text-xs dark:bg-slate-800">{{ active_tenant_id }}</code>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <a href="/app/documents" class="topbar-link rounded-lg px-3 py-1.5 text-sm font-medium {% if current_path.startswith('/app/documents') %}bg-brand-50 text-brand-700 dark:bg-brand-700/20 dark:text-brand-200{% else %}hover:bg-slate-100 dark:hover:bg-slate-800{% endif %}">Documents</a>
+        <a href="/app/settings" class="topbar-link rounded-lg px-3 py-1.5 text-sm font-medium {% if current_path.startswith('/app/settings') %}bg-brand-50 text-brand-700 dark:bg-brand-700/20 dark:text-brand-200{% else %}hover:bg-slate-100 dark:hover:bg-slate-800{% endif %}">Settings</a>
+        <button type="button" onclick="window.retrievia.toggleTheme()" class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800">Theme</button>
+        <a href="/logout" class="rounded-lg bg-slate-900 px-3 py-1.5 text-sm text-white hover:bg-slate-700 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white">Logout</a>
+      </div>
+    </div>
+    </header>
+  <main class="flex-1 p-4 lg:p-8">
+      {% block app_content %}{% endblock %}
+  </main>
+</div>
+{% endblock %}

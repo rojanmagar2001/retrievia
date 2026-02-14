@@ -1,0 +1,9 @@
+{% include "partials/document_rows.html" %}
+{% include "partials/toast.html" %}
+{% if ingestion_job_id %}
+<div id="latest-ingestion" hx-swap-oob="innerHTML">
+  <div class="rounded-lg border border-slate-200 p-3 dark:border-slate-800" hx-get="/app/ingestion-jobs/{{ ingestion_job_id }}" hx-trigger="load, every 3s" hx-target="this" hx-swap="innerHTML">
+    Loading ingestion status...
+  </div>
+</div>
+{% endif %}

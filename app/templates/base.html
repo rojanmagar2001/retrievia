@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en" class="h-full bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Retrievia{% endblock %}</title>
+  <script>
+    (function() {
+      var theme = localStorage.getItem("retrievia-theme") || "system";
+      if (theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+        document.documentElement.classList.add("dark");
+      }
+    })();
+  </script>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ["Sora", "ui-sans-serif", "system-ui"]
+          },
+          colors: {
+            brand: {
+              50: "#eef8ff",
+              100: "#d8eeff",
+              500: "#1c86e5",
+              600: "#176ec0",
+              700: "#12589a"
+            }
+          },
+          boxShadow: {
+            soft: "0 10px 30px -20px rgba(8, 47, 73, 0.35)"
+          }
+        }
+      }
+    };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.7/dist/purify.min.js"></script>
+  <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body class="h-full antialiased">
+  <div class="min-h-full bg-grid">
+    {% block body %}{% endblock %}
+  </div>
+  <div id="toast-region" class="fixed right-4 top-4 z-50 flex w-80 flex-col gap-2"></div>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

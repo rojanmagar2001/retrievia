@@ -1,0 +1,28 @@
+{% extends "app/layout.html" %}
+{% block app_content %}
+<section class="mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 shadow-soft dark:border-slate-800 dark:bg-slate-900">
+  <h1 class="text-xl font-semibold">Settings</h1>
+  <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">Account and tenant details from <code>/auth/me</code>.</p>
+
+  {% if me_data %}
+  <dl class="mt-6 grid gap-3 text-sm">
+    <div class="rounded-lg border border-slate-200 p-3 dark:border-slate-800">
+      <dt class="text-slate-500 dark:text-slate-400">User ID</dt>
+      <dd class="mt-1 font-medium">{{ me_data.user_id }}</dd>
+    </div>
+    <div class="rounded-lg border border-slate-200 p-3 dark:border-slate-800">
+      <dt class="text-slate-500 dark:text-slate-400">Email</dt>
+      <dd class="mt-1 font-medium">{{ me_data.email }}</dd>
+    </div>
+    <div class="rounded-lg border border-slate-200 p-3 dark:border-slate-800">
+      <dt class="text-slate-500 dark:text-slate-400">Tenant ID</dt>
+      <dd class="mt-1 font-medium">{{ me_data.tenant_id }}</dd>
+    </div>
+  </dl>
+  {% else %}
+  <div class="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">Unable to load profile data.</div>
+  {% endif %}
+
+  <a href="/logout" class="mt-6 inline-flex rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white">Logout</a>
+</section>
+{% endblock %}

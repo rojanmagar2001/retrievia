@@ -1,0 +1,19 @@
+<tbody id="documents-body">
+  {% if documents %}
+    {% for doc in documents %}
+    <tr class="document-row border-t border-slate-200 transition hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/30" data-doc-search="{{ (doc.title or '')|lower }} {{ (doc.external_id or '')|lower }}">
+      <td class="px-2 py-3 font-medium">{{ doc.title or 'Untitled' }}</td>
+      <td class="px-2 py-3 text-slate-600 dark:text-slate-300">{{ doc.external_id or '-' }}</td>
+      <td class="px-2 py-3 text-slate-600 dark:text-slate-300">{{ doc.created_at }}</td>
+      <td class="px-2 py-3"><span class="inline-flex rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200">available</span></td>
+      <td class="px-2 py-3 text-right">
+        <button class="rounded-md border border-slate-300 px-2 py-1 text-xs hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" hx-get="/app/documents/{{ doc.document_id }}" hx-target="#document-modal-content" hx-swap="innerHTML" hx-on::after-request="window.retrievia.openModal()">View</button>
+      </td>
+    </tr>
+    {% endfor %}
+  {% else %}
+    <tr class="border-t border-slate-200 dark:border-slate-800">
+      <td colspan="5" class="px-2 py-6 text-center text-sm text-slate-500 dark:text-slate-400">No documents uploaded yet.</td>
+    </tr>
+  {% endif %}
+</tbody>

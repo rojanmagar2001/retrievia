@@ -1,0 +1,65 @@
+{% extends "app/layout.html" %}
+{% block app_content %}
+<section class="grid gap-4 xl:grid-cols-[380px_1fr]">
+  <div class="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-soft backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
+    <h1 class="text-xl font-semibold">Documents</h1>
+    <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">Upload PDF, markdown, or text files for ingestion.</p>
+    <form class="mt-4 space-y-3" hx-post="/app/documents/upload" hx-encoding="multipart/form-data" hx-target="#documents-body" hx-swap="outerHTML" hx-indicator="#doc-upload-indicator">
+      <label class="block text-sm font-medium">
+        Title
+        <input name="title" class="mt-1 w-full rounded-lg border-slate-300 text-sm dark:border-slate-700 dark:bg-slate-950" placeholder="e.g. Architecture Spec Q1" />
+      </label>
+      <label class="block text-sm font-medium">
+        External ID
+        <input name="external_id" class="mt-1 w-full rounded-lg border-slate-300 text-sm dark:border-slate-700 dark:bg-slate-950" placeholder="Optional external reference" />
+      </label>
+      <label class="block text-sm font-medium">
+        File
+        <input id="upload-file-input" name="file" type="file" required class="mt-1 w-full rounded-lg border-slate-300 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-brand-50 file:px-3 file:py-1.5 file:text-brand-700 dark:border-slate-700 dark:bg-slate-950 dark:file:bg-brand-700/20 dark:file:text-brand-200" />
+        <p id="upload-file-meta" class="mt-1 text-xs text-slate-500 dark:text-slate-400">Accepted: PDF, TXT, MD</p>
+      </label>
+      <button class="inline-flex w-full items-center justify-center rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-500" type="submit">
+        <span id="doc-upload-indicator" class="htmx-indicator mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-r-transparent"></span>
+        Upload
+      </button>
+    </form>
+
+    <div id="latest-ingestion" class="mt-4"></div>
+  </div>
+
+  <div class="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-soft backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
+    <div class="mb-3 flex items-center justify-between">
+      <h2 class="text-lg font-semibold">Library</h2>
+      <button class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" hx-get="/app/documents/list" hx-target="#documents-body" hx-swap="outerHTML">Refresh</button>
+    </div>
+    <label class="mb-3 block text-sm font-medium">
+      Search
+      <input id="documents-search" class="mt-1 w-full rounded-lg border-slate-300 text-sm dark:border-slate-700 dark:bg-slate-950" placeholder="Filter by title or external ID" />
+    </label>
+    <div class="overflow-x-auto">
+      <table class="w-full min-w-[720px] text-left text-sm">
+        <thead class="text-slate-500 dark:text-slate-400">
+          <tr>
+            <th class="px-2 py-2">Title</th>
+            <th class="px-2 py-2">External ID</th>
+            <th class="px-2 py-2">Created</th>
+            <th class="px-2 py-2">Status</th>
+            <th class="px-2 py-2"></th>
+          </tr>
+        </thead>
+        {% include "partials/document_rows.html" %}
+      </table>
+    </div>
+  </div>
+</section>
+
+<div id="document-modal" class="pointer-events-none fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/40 p-4">
+  <div class="pointer-events-auto w-full max-w-xl rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+    <div class="mb-3 flex items-center justify-between">
+      <h3 class="text-lg font-semibold">Document</h3>
+      <button class="rounded-md border border-slate-300 px-2 py-1 text-xs dark:border-slate-700" onclick="window.retrievia.closeModal()">Close</button>
+    </div>
+    <div id="document-modal-content"></div>
+  </div>
+</div>
+{% endblock %}

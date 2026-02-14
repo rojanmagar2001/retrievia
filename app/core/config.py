@@ -85,6 +85,11 @@ class Settings(BaseSettings):
     otel_traces_sampler: str = "parentbased_traceidratio"
     otel_traces_sampler_arg: str = "1.0"
 
+    web_backend_base_url: str = "http://127.0.0.1:8000"
+    web_session_cookie_name: str = "retrievia_session"
+    web_session_ttl_seconds: int = 43200
+    web_cookie_secure: bool = False
+
 
 @lru_cache
 def get_settings() -> Settings:

@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 from app.api.auth import router as auth_router
 from app.api.chat import router as chat_router
@@ -11,6 +12,7 @@ from app.core.logging import configure_logging, get_logger
 from app.middleware.rate_limit import RateLimitMiddleware
 from app.middleware.request_size import RequestSizeLimitMiddleware
 from app.middleware.tenant_context import TenantContextMiddleware
+from app.web.routes import WebSessionMiddleware, router as web_router
 
 configure_logging(level=settings.log_level, json_logs=settings.log_json)
 logger = get_logger(__name__)
@@ -36,10 +38,13 @@ app = FastAPI(
 app.add_middleware(TenantContextMiddleware)
 app.add_middleware(RequestSizeLimitMiddleware, max_body_bytes=settings.request_max_body_bytes)
 app.add_middleware(RateLimitMiddleware)
+app.add_middleware(WebSessionMiddleware)
 app.include_router(auth_router)
 app.include_router(chat_router)
 app.include_router(documents_router)
 app.include_router(testing_router)
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
+app.include_router(web_router)
 
 
 @app.get("/healthz", tags=["system"])

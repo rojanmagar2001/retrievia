@@ -1,0 +1,49 @@
+<form
+    id="login-form"
+    class="mt-6 space-y-4"
+    hx-post="/login"
+    hx-target="#login-form"
+    hx-swap="outerHTML"
+>
+    {% if form_error %}
+    <div
+        class="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-200"
+    >
+        {{ form_error }}
+    </div>
+    {% endif %}
+    <label class="block text-sm font-medium">
+        Email
+        <input
+            name="email"
+            type="email"
+            required
+            class="mt-1 w-full rounded-lg border-slate-300 bg-white text-slate-900 placeholder:text-slate-500 focus:border-brand-500 focus:ring-brand-500/30 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-400"
+            value="{{ form_values.email or '' }}"
+        />
+    </label>
+    <label class="block text-sm font-medium">
+        Password
+        <input
+            name="password"
+            type="password"
+            required
+            class="mt-1 w-full rounded-lg border-slate-300 bg-white text-slate-900 placeholder:text-slate-500 focus:border-brand-500 focus:ring-brand-500/30 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-400"
+        />
+    </label>
+    <input name="tenant_id" type="hidden" value="{{ form_values.tenant_id or '' }}" />
+    {% if form_values.tenant_id %}
+    <p class="text-xs text-slate-500 dark:text-slate-400">
+        Tenant is auto-selected from your last session.
+    </p>
+    {% endif %}
+    <button
+        class="inline-flex w-full items-center justify-center rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-500"
+        type="submit"
+    >
+        <span
+            class="htmx-indicator mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-r-transparent"
+        ></span>
+        Sign in
+    </button>
+</form>
