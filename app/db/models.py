@@ -8,6 +8,11 @@ from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
+from app.db.mixins import TenantScoped
+
+
+def enum_values(enum_cls):
+    return [member.value for member in enum_cls]
 
 
 class TenantStatus(str, Enum):
@@ -44,7 +49,7 @@ class Tenant(Base):
     slug: Mapped[str] = mapped_column(String(100), nullable=False, unique=True, index=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     status: Mapped[TenantStatus] = mapped_column(
-        sa.Enum(TenantStatus, name="tenant_status"),
+        sa.Enum(TenantStatus, name="tenant_status", values_callable=enum_values),
         nullable=False,
         server_default=sa.text("'active'"),
     )
@@ -60,7 +65,7 @@ class Tenant(Base):
     )
 
 
-class User(Base):
+class User(TenantScoped, Base):
     __tablename__ = "users"
     __table_args__ = (UniqueConstraint("tenant_id", "email", name="uq_users_tenant_id_email"),)
 
@@ -80,7 +85,7 @@ class User(Base):
     )
 
 
-class ApiKey(Base):
+class ApiKey(TenantScoped, Base):
     __tablename__ = "api_keys"
     __table_args__ = (
         UniqueConstraint("tenant_id", "key_prefix", name="uq_api_keys_tenant_id_key_prefix"),
@@ -109,7 +114,7 @@ class ApiKey(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=sa.func.now())
 
 
-class Document(Base):
+class Document(TenantScoped, Base):
     __tablename__ = "documents"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -129,7 +134,7 @@ class Document(Base):
     )
 
 
-class DocumentVersion(Base):
+class DocumentVersion(TenantScoped, Base):
     __tablename__ = "document_versions"
     __table_args__ = (UniqueConstraint("document_id", "version", name="uq_document_versions_document_id_version"),)
 
@@ -157,7 +162,7 @@ class DocumentVersion(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=sa.func.now())
 
 
-class Chunk(Base):
+class Chunk(TenantScoped, Base):
     __tablename__ = "chunks"
     __table_args__ = (
         UniqueConstraint("document_version_id", "chunk_index", name="uq_chunks_document_version_id_chunk_index"),
@@ -189,7 +194,7 @@ class Chunk(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=sa.func.now())
 
 
-class IngestionJob(Base):
+class IngestionJob(TenantScoped, Base):
     __tablename__ = "ingestion_jobs"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -206,12 +211,12 @@ class IngestionJob(Base):
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
     status: Mapped[IngestionJobStatus] = mapped_column(
-        sa.Enum(IngestionJobStatus, name="ingestion_job_status"),
+        sa.Enum(IngestionJobStatus, name="ingestion_job_status", values_callable=enum_values),
         nullable=False,
         server_default=sa.text("'queued'"),
     )
     source_type: Mapped[IngestionSourceType] = mapped_column(
-        sa.Enum(IngestionSourceType, name="ingestion_source_type"),
+        sa.Enum(IngestionSourceType, name="ingestion_source_type", values_callable=enum_values),
         nullable=False,
     )
     source_uri: Mapped[str] = mapped_column(String(2048), nullable=True)
@@ -226,7 +231,7 @@ class IngestionJob(Base):
     )
 
 
-class Conversation(Base):
+class Conversation(TenantScoped, Base):
     __tablename__ = "conversations"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -245,7 +250,7 @@ class Conversation(Base):
     )
 
 
-class Message(Base):
+class Message(TenantScoped, Base):
     __tablename__ = "messages"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -256,7 +261,7 @@ class Message(Base):
         UUID(as_uuid=True), ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False, index=True
     )
     role: Mapped[MessageRole] = mapped_column(
-        sa.Enum(MessageRole, name="message_role"),
+        sa.Enum(MessageRole, name="message_role", values_callable=enum_values),
         nullable=False,
     )
     content: Mapped[str] = mapped_column(Text, nullable=False)
@@ -271,7 +276,7 @@ class Message(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=sa.func.now())
 
 
-class ConversationSummary(Base):
+class ConversationSummary(TenantScoped, Base):
     __tablename__ = "conversation_summaries"
     __table_args__ = (
         UniqueConstraint("conversation_id", "summary_index", name="uq_conversation_summaries_conversation_id_summary_index"),

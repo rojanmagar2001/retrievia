@@ -48,6 +48,7 @@ class Settings(BaseSettings):
     rate_limit_enabled: bool = True
     rate_limit_requests: int = 60
     rate_limit_window_seconds: int = 60
+    request_max_body_bytes: int = 1048576
 
     pinecone_api_key: str = ""
     pinecone_index_name: str = ""

@@ -2,8 +2,12 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from app.api.auth import router as auth_router
 from app.core.config import settings
 from app.core.logging import configure_logging, get_logger
+from app.middleware.rate_limit import RateLimitMiddleware
+from app.middleware.request_size import RequestSizeLimitMiddleware
+from app.middleware.tenant_context import TenantContextMiddleware
 
 configure_logging(level=settings.log_level, json_logs=settings.log_json)
 logger = get_logger(__name__)
@@ -25,6 +29,11 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
+
+app.add_middleware(TenantContextMiddleware)
+app.add_middleware(RequestSizeLimitMiddleware, max_body_bytes=settings.request_max_body_bytes)
+app.add_middleware(RateLimitMiddleware)
+app.include_router(auth_router)
 
 
 @app.get("/healthz", tags=["system"])
