@@ -3,6 +3,9 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.api.auth import router as auth_router
+from app.api.chat import router as chat_router
+from app.api.documents import router as documents_router
+from app.api.testing import router as testing_router
 from app.core.config import settings
 from app.core.logging import configure_logging, get_logger
 from app.middleware.rate_limit import RateLimitMiddleware
@@ -34,6 +37,9 @@ app.add_middleware(TenantContextMiddleware)
 app.add_middleware(RequestSizeLimitMiddleware, max_body_bytes=settings.request_max_body_bytes)
 app.add_middleware(RateLimitMiddleware)
 app.include_router(auth_router)
+app.include_router(chat_router)
+app.include_router(documents_router)
+app.include_router(testing_router)
 
 
 @app.get("/healthz", tags=["system"])

@@ -6,7 +6,7 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
 from app.db.models import Tenant, TenantStatus, User
-from app.db.session import get_db, reset_current_tenant_id, set_current_tenant_id
+from app.db.session import clear_current_tenant_id, get_db, set_current_tenant_id
 from app.security.jwt import TokenError, decode_access_token
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
@@ -60,8 +60,8 @@ def get_tenant_scoped_db(
     db: Session = Depends(get_db),
     current_tenant: Tenant = Depends(get_current_tenant),
 ) -> Generator[Session, None, None]:
-    token = set_current_tenant_id(current_tenant.id)
+    set_current_tenant_id(current_tenant.id)
     try:
         yield db
     finally:
-        reset_current_tenant_id(token)
+        clear_current_tenant_id()

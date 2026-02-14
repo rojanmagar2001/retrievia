@@ -27,7 +27,14 @@ def set_current_tenant_id(tenant_id: UUID) -> Token[UUID | None]:
 
 
 def reset_current_tenant_id(token: Token[UUID | None]) -> None:
-    _tenant_context.reset(token)
+    try:
+        _tenant_context.reset(token)
+    except ValueError:
+        _tenant_context.set(None)
+
+
+def clear_current_tenant_id() -> None:
+    _tenant_context.set(None)
 
 
 def get_current_tenant_id() -> UUID | None:

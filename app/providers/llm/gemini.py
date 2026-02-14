@@ -60,11 +60,15 @@ class GeminiProvider(LLMProvider):
             model=self.settings.gemini_model,
             contents=prompt,
         )
+        usage: dict[str, int | None] | None = None
         for chunk in stream:
             text = self._extract_text(chunk)
+            chunk_usage = self._extract_usage(chunk)
+            if chunk_usage is not None:
+                usage = chunk_usage
             if text:
                 yield GenerationChunk(event="token", delta=text)
-        yield GenerationChunk(event="done", delta="")
+        yield GenerationChunk(event="done", delta="", metadata={"usage": usage or {}})
 
     @staticmethod
     def _to_prompt(messages: list[ChatMessage]) -> str:
@@ -105,3 +109,30 @@ class GeminiProvider(LLMProvider):
             if values:
                 vectors.append([float(x) for x in values])
         return vectors
+
+    @staticmethod
+    def _extract_usage(response: Any) -> dict[str, int | None] | None:
+        usage = getattr(response, "usage_metadata", None)
+        if usage is None and isinstance(response, dict):
+            usage = response.get("usage_metadata")
+
+        if usage is None:
+            return None
+
+        def _read(name: str) -> int | None:
+            value = getattr(usage, name, None)
+            if value is None and isinstance(usage, dict):
+                value = usage.get(name)
+            return int(value) if isinstance(value, int) else None
+
+        prompt_tokens = _read("prompt_token_count") or _read("input_token_count")
+        completion_tokens = _read("candidates_token_count") or _read("output_token_count")
+        total_tokens = _read("total_token_count")
+        if total_tokens is None and prompt_tokens is not None and completion_tokens is not None:
+            total_tokens = prompt_tokens + completion_tokens
+
+        return {
+            "prompt_tokens": prompt_tokens,
+            "completion_tokens": completion_tokens,
+            "total_tokens": total_tokens,
+        }

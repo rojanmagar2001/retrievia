@@ -12,7 +12,18 @@
     { "key": "email", "value": "admin@acme-test.local" },
     { "key": "password", "value": "ChangeMe12345!" },
     { "key": "registerEmail", "value": "" },
-    { "key": "token", "value": "" }
+    { "key": "token", "value": "" },
+    { "key": "chatMessage", "value": "What does the indexed knowledge base say about onboarding?" },
+    { "key": "conversationId", "value": "" },
+    { "key": "docIdsJson", "value": "[]" },
+    { "key": "seedConversationKey", "value": "onboarding" },
+    { "key": "seedConversationId", "value": "" },
+    { "key": "seedQuestion", "value": "Give me a concise summary from this seeded conversation." },
+    { "key": "uploadFilePath", "value": "" },
+    { "key": "uploadTitle", "value": "Postman Uploaded Document" },
+    { "key": "uploadExternalId", "value": "postman-upload-doc-001" },
+    { "key": "uploadedDocumentId", "value": "" },
+    { "key": "ingestionJobId", "value": "" }
   ],
   "event": [
     {
@@ -289,6 +300,416 @@
               ]
             },
             "url": "{{baseUrl}}/auth/login"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Chat",
+      "item": [
+        {
+          "name": "Chat (POST /v1/chat)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const message = pm.collectionVariables.get('chatMessage') || 'Hello';",
+                  "const conversationId = (pm.collectionVariables.get('conversationId') || '').trim();",
+                  "let docIds = [];",
+                  "try {",
+                  "  const parsed = JSON.parse(pm.collectionVariables.get('docIdsJson') || '[]');",
+                  "  if (Array.isArray(parsed)) {",
+                  "    docIds = parsed;",
+                  "  }",
+                  "} catch (err) {",
+                  "  console.warn('docIdsJson must be a JSON array; defaulting to []');",
+                  "}",
+                  "const payload = { message };",
+                  "if (conversationId) {",
+                  "  payload.conversation_id = conversationId;",
+                  "}",
+                  "if (docIds.length > 0) {",
+                  "  payload.filters = { doc_ids: docIds };",
+                  "}",
+                  "pm.variables.set('chatRequestBody', JSON.stringify(payload, null, 2));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('/v1/chat 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.test('answer is present', function () {",
+                  "  pm.expect(body.answer).to.be.a('string');",
+                  "});",
+                  "pm.test('citations is array', function () {",
+                  "  pm.expect(body.citations).to.be.an('array');",
+                  "});",
+                  "pm.test('sources is array', function () {",
+                  "  pm.expect(body.sources).to.be.an('array');",
+                  "});",
+                  "pm.test('timings object exists', function () {",
+                  "  pm.expect(body.timings).to.be.an('object');",
+                  "});",
+                  "pm.test('retrieval_debug object exists', function () {",
+                  "  pm.expect(body.retrieval_debug).to.be.an('object');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "X-Tenant-Id", "value": "{{tenantId}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{{chatRequestBody}}"
+            },
+            "url": "{{baseUrl}}/v1/chat"
+          }
+        },
+        {
+          "name": "Chat Stream (POST /v1/chat/stream)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const message = pm.collectionVariables.get('chatMessage') || 'Hello';",
+                  "const conversationId = (pm.collectionVariables.get('conversationId') || '').trim();",
+                  "let docIds = [];",
+                  "try {",
+                  "  const parsed = JSON.parse(pm.collectionVariables.get('docIdsJson') || '[]');",
+                  "  if (Array.isArray(parsed)) {",
+                  "    docIds = parsed;",
+                  "  }",
+                  "} catch (err) {",
+                  "  console.warn('docIdsJson must be a JSON array; defaulting to []');",
+                  "}",
+                  "const payload = { message };",
+                  "if (conversationId) {",
+                  "  payload.conversation_id = conversationId;",
+                  "}",
+                  "if (docIds.length > 0) {",
+                  "  payload.filters = { doc_ids: docIds };",
+                  "}",
+                  "pm.variables.set('chatStreamRequestBody', JSON.stringify(payload, null, 2));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('/v1/chat/stream returns 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('response is SSE', function () {",
+                  "  const contentType = (pm.response.headers.get('Content-Type') || '').toLowerCase();",
+                  "  pm.expect(contentType).to.include('text/event-stream');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "X-Tenant-Id", "value": "{{tenantId}}" },
+              { "key": "Accept", "value": "text/event-stream" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{{chatStreamRequestBody}}"
+            },
+            "url": "{{baseUrl}}/v1/chat/stream"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Testing",
+      "item": [
+        {
+          "name": "List Seeded Conversations",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('/v1/testing/conversations 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.test('items is array', function () {",
+                  "  pm.expect(body.items).to.be.an('array');",
+                  "});",
+                  "const targetKey = pm.collectionVariables.get('seedConversationKey') || 'onboarding';",
+                  "const selected = (body.items || []).find(i => i.key === targetKey);",
+                  "if (selected && selected.conversation_id) {",
+                  "  pm.collectionVariables.set('seedConversationId', selected.conversation_id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "X-Tenant-Id", "value": "{{tenantId}}" }
+            ],
+            "url": "{{baseUrl}}/v1/testing/conversations"
+          }
+        },
+        {
+          "name": "Chat Seeded Conversation By Key",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('seed chat by key returns 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.test('answer exists', function () {",
+                  "  pm.expect(body.answer).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "X-Tenant-Id", "value": "{{tenantId}}" }
+            ],
+            "url": "{{baseUrl}}/v1/testing/conversations/{{seedConversationKey}}/chat"
+          }
+        },
+        {
+          "name": "Chat Existing Conversation By ID",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = {",
+                  "  message: pm.collectionVariables.get('seedQuestion') || 'Give me a summary.',",
+                  "};",
+                  "pm.variables.set('seedChatBody', JSON.stringify(body, null, 2));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('seed chat by id returns 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.test('response has timings', function () {",
+                  "  pm.expect(body.timings).to.be.an('object');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "X-Tenant-Id", "value": "{{tenantId}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{{seedChatBody}}"
+            },
+            "url": "{{baseUrl}}/v1/testing/conversations/{{seedConversationId}}/chat"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Documents",
+      "item": [
+        {
+          "name": "Upload Document + Enqueue Ingestion",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('/v1/documents/upload returns 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.test('document payload exists', function () {",
+                  "  pm.expect(body.document).to.be.an('object');",
+                  "  pm.expect(body.document.document_id).to.be.a('string').and.not.empty;",
+                  "});",
+                  "pm.test('ingestion payload exists', function () {",
+                  "  pm.expect(body.ingestion).to.be.an('object');",
+                  "  pm.expect(body.ingestion.ingestion_job_id).to.be.a('string').and.not.empty;",
+                  "});",
+                  "pm.collectionVariables.set('uploadedDocumentId', body.document.document_id);",
+                  "pm.collectionVariables.set('ingestionJobId', body.ingestion.ingestion_job_id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "X-Tenant-Id", "value": "{{tenantId}}" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "title", "value": "{{uploadTitle}}", "type": "text" },
+                { "key": "external_id", "value": "{{uploadExternalId}}", "type": "text" },
+                { "key": "file", "type": "file", "src": "{{uploadFilePath}}" }
+              ]
+            },
+            "url": "{{baseUrl}}/v1/documents/upload"
+          }
+        },
+        {
+          "name": "List Documents",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('/v1/documents returns 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.test('documents array returned', function () {",
+                  "  pm.expect(body).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "X-Tenant-Id", "value": "{{tenantId}}" }
+            ],
+            "url": "{{baseUrl}}/v1/documents"
+          }
+        },
+        {
+          "name": "Get Uploaded Document",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('/v1/documents/{id} returns 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.test('document id matches variable', function () {",
+                  "  pm.expect(body.document_id).to.eql(pm.collectionVariables.get('uploadedDocumentId'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "X-Tenant-Id", "value": "{{tenantId}}" }
+            ],
+            "url": "{{baseUrl}}/v1/documents/{{uploadedDocumentId}}"
+          }
+        },
+        {
+          "name": "Enqueue Ingestion for Existing Document",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('/v1/documents/{id}/ingest returns 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.test('ingestion job id returned', function () {",
+                  "  pm.expect(body.ingestion_job_id).to.be.a('string').and.not.empty;",
+                  "});",
+                  "pm.collectionVariables.set('ingestionJobId', body.ingestion_job_id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "X-Tenant-Id", "value": "{{tenantId}}" }
+            ],
+            "url": "{{baseUrl}}/v1/documents/{{uploadedDocumentId}}/ingest"
+          }
+        },
+        {
+          "name": "Get Ingestion Job",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('/v1/ingestion-jobs/{id} returns 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.test('job status field exists', function () {",
+                  "  pm.expect(body.status).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "X-Tenant-Id", "value": "{{tenantId}}" }
+            ],
+            "url": "{{baseUrl}}/v1/ingestion-jobs/{{ingestionJobId}}"
           }
         }
       ]

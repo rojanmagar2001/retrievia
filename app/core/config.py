@@ -52,7 +52,7 @@ class Settings(BaseSettings):
 
     pinecone_api_key: str = ""
     pinecone_index_name: str = ""
-    pinecone_index_dimension: int = 768
+    pinecone_index_dimension: int = 3072
     pinecone_index_metric: Literal["cosine", "dotproduct", "euclidean"] = "cosine"
     pinecone_cloud: str = "aws"
     pinecone_region: str = "us-east-1"
@@ -67,12 +67,16 @@ class Settings(BaseSettings):
     ingestion_chunk_size: int = 1200
     ingestion_chunk_overlap: int = 200
     ingestion_embed_batch_size: int = 32
+    local_upload_root: str = "./var/uploads"
 
     retrieval_top_k: int = 6
     retrieval_fetch_k: int = 24
     retrieval_use_mmr: bool = True
     retrieval_mmr_lambda: float = 0.7
     retrieval_rerank_enabled: bool = False
+
+    chat_memory_turns: int = 8
+    chat_summary_refresh_turns: int = 6
 
     tracing_enabled: bool = False
     otel_enabled: bool = False

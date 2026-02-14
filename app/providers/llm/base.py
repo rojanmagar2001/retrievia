@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Iterable, Literal, TypedDict
+from typing import Any, Iterable, Literal, TypedDict
 
 
 class ChatMessage(TypedDict):
@@ -14,12 +14,16 @@ class ChatMessage(TypedDict):
 class GenerationChunk:
     event: Literal["token", "done", "error"]
     delta: str = ""
+    metadata: dict[str, Any] | None = None
 
-    def to_sse_payload(self) -> dict[str, str]:
-        return {
+    def to_sse_payload(self) -> dict[str, Any]:
+        payload: dict[str, Any] = {
             "event": self.event,
             "data": self.delta,
         }
+        if self.metadata:
+            payload["metadata"] = self.metadata
+        return payload
 
 
 class LLMProvider(ABC):

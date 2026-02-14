@@ -4,7 +4,7 @@ PYTHON ?= python3.14
 VENV ?= .venv
 BIN := $(VENV)/bin
 
-.PHONY: help setup venv install install-dev bootstrap dev run-api run-worker run-api-dev run-worker-dev local-services-up local-services-down infra-up infra-down infra-restart infra-logs infra-ps infra-local-up infra-local-down db-upgrade db-downgrade db-current db-migrate seed-auth-test lint format test typecheck lint-local format-local test-local typecheck-local lint-docker format-docker test-docker build up down restart logs ps api worker api-shell worker-shell
+.PHONY: help setup venv install install-dev bootstrap dev run-api run-worker run-api-dev run-worker-dev local-services-up local-services-down infra-up infra-down infra-restart infra-logs infra-ps infra-local-up infra-local-down db-upgrade db-downgrade db-current db-migrate seed-auth-test seed-rag-test lint format test typecheck lint-local format-local test-local typecheck-local lint-docker format-docker test-docker build up down restart logs ps api worker api-shell worker-shell
 
 help:
 	@printf "Local setup:\n"
@@ -40,6 +40,7 @@ help:
 	@printf "  db-current         Alembic current revision\n"
 	@printf "  db-migrate         Run scripts/db_migrate.py (ACTION, REVISION)\n\n"
 	@printf "  seed-auth-test     Seed test tenants/users\n\n"
+	@printf "  seed-rag-test      Seed tenant docs + conversations for RAG tests\n\n"
 	@printf "Docker workflow:\n"
 	@printf "  build              Build api/worker images\n"
 	@printf "  up                 Start all docker services\n"
@@ -148,6 +149,9 @@ db-migrate:
 
 seed-auth-test:
 	DATABASE_URL=$${DATABASE_URL:-postgresql+psycopg://retrievia:retrievia@localhost:5432/retrievia} $(BIN)/python scripts/seed_test_auth_data.py
+
+seed-rag-test:
+	DATABASE_URL=$${DATABASE_URL:-postgresql+psycopg://retrievia:retrievia@localhost:5432/retrievia} $(BIN)/python scripts/seed_test_rag_data.py
 
 lint: lint-local
 

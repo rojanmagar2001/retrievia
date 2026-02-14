@@ -134,13 +134,24 @@ class PineconeVectorStore:
 
     def delete_by_doc_id(self, tenant_id: str, doc_id: str) -> None:
         namespace = self.build_namespace(tenant_id)
-        self._get_index().delete(
-            namespace=namespace,
-            filter={
-                "tenant_id": {"$eq": tenant_id},
-                "doc_id": {"$eq": doc_id},
-            },
-        )
+        try:
+            self._get_index().delete(
+                namespace=namespace,
+                filter={
+                    "tenant_id": {"$eq": tenant_id},
+                    "doc_id": {"$eq": doc_id},
+                },
+            )
+        except Exception as exc:
+            if "namespace not found" in str(exc).lower():
+                logger.info(
+                    "pinecone_namespace_missing_on_doc_delete",
+                    tenant_id=tenant_id,
+                    namespace=namespace,
+                    doc_id=doc_id,
+                )
+                return
+            raise
 
     def delete_by_tenant_id(self, tenant_id: str) -> None:
         namespace = self.build_namespace(tenant_id)

@@ -217,19 +217,23 @@ def _embed_and_upsert_chunks(document: Document, version: DocumentVersion, chunk
 
         payload: list[dict] = []
         for chunk, values in zip(batch, vectors, strict=True):
+            metadata = {
+                "tenant_id": tenant_id,
+                "doc_id": doc_id,
+                "version": version.version,
+                "chunk_index": chunk.chunk_index,
+                "document_version_id": str(version.id),
+            }
+            if chunk.page_number is not None:
+                metadata["page"] = chunk.page_number
+            if chunk.section is not None:
+                metadata["section"] = chunk.section
+
             payload.append(
                 {
                     "id": _vector_id(document_id=document.id, version=version.version, index=chunk.chunk_index),
                     "values": values,
-                    "metadata": {
-                        "tenant_id": tenant_id,
-                        "doc_id": doc_id,
-                        "version": version.version,
-                        "page": chunk.page_number,
-                        "section": chunk.section,
-                        "chunk_index": chunk.chunk_index,
-                        "document_version_id": str(version.id),
-                    },
+                    "metadata": metadata,
                 }
             )
 
