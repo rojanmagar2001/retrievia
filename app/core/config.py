@@ -68,6 +68,12 @@ class Settings(BaseSettings):
     ingestion_chunk_overlap: int = 200
     ingestion_embed_batch_size: int = 32
 
+    retrieval_top_k: int = 6
+    retrieval_fetch_k: int = 24
+    retrieval_use_mmr: bool = True
+    retrieval_mmr_lambda: float = 0.7
+    retrieval_rerank_enabled: bool = False
+
     tracing_enabled: bool = False
     otel_enabled: bool = False
     otel_service_name: str = "retrievia-api"

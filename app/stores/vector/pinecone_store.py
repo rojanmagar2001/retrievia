@@ -19,7 +19,6 @@ class PineconeVectorStore:
         self, settings: Settings | None = None, client: Pinecone | None = None
     ) -> None:
         self.settings = settings or get_settings()
-        print("Pinecone Index Name:", self.settings.pinecone_index_name)
         if not self.settings.pinecone_api_key:
             raise ValueError("PINECONE_API_KEY is required")
         if not self.settings.pinecone_index_name:
@@ -111,13 +110,18 @@ class PineconeVectorStore:
         vector: list[float],
         top_k: int = 10,
         doc_id: str | None = None,
+        doc_ids: list[str] | None = None,
         include_values: bool = False,
         include_metadata: bool = True,
     ) -> Any:
         namespace = self.build_namespace(tenant_id)
-        metadata_filter: dict[str, dict[str, str]] = {"tenant_id": {"$eq": tenant_id}}
+        metadata_filter: dict[str, dict[str, str] | dict[str, list[str]]] = {
+            "tenant_id": {"$eq": tenant_id}
+        }
         if doc_id:
             metadata_filter["doc_id"] = {"$eq": doc_id}
+        elif doc_ids:
+            metadata_filter["doc_id"] = {"$in": doc_ids}
 
         return self._get_index().query(
             namespace=namespace,
