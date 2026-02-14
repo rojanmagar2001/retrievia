@@ -52,9 +52,12 @@ class Settings(BaseSettings):
 
     pinecone_api_key: str = ""
     pinecone_index_name: str = ""
+    pinecone_index_dimension: int = 768
+    pinecone_index_metric: Literal["cosine", "dotproduct", "euclidean"] = "cosine"
     pinecone_cloud: str = "aws"
     pinecone_region: str = "us-east-1"
     pinecone_namespace_prefix: str = "tenant"
+    pinecone_namespace_strategy: Literal["tenant", "tenant_env"] = "tenant_env"
 
     gemini_api_key: str = ""
     gemini_model: str = "gemini-1.5-pro"
