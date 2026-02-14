@@ -31,7 +31,8 @@ dependencies = [
   "opentelemetry-instrumentation-sqlalchemy==0.50b0",
   "opentelemetry-instrumentation-redis==0.50b0",
   "pinecone==5.4.2",
-  "google-genai==0.3.0"
+  "google-genai==0.3.0",
+  "pypdf==5.3.1"
 ]
 
 [project.optional-dependencies]

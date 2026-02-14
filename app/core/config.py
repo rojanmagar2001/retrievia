@@ -64,6 +64,10 @@ class Settings(BaseSettings):
     gemini_embedding_model: str = "text-embedding-004"
     gemini_timeout_seconds: int = 30
 
+    ingestion_chunk_size: int = 1200
+    ingestion_chunk_overlap: int = 200
+    ingestion_embed_batch_size: int = 32
+
     tracing_enabled: bool = False
     otel_enabled: bool = False
     otel_service_name: str = "retrievia-api"
